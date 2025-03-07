@@ -1,2 +1,2 @@
 # SQL_Interivew_questions
-This repo covers all the SQL interview questions needed for cracking all product companies.
+This repository includes all the SQL interview questions and solutions required to succeed in product company interviews.
