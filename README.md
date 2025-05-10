@@ -1,18 +1,3 @@
-## Table of Contents
-
-- [Basic SQL](#basic-sql)
-- [Intermediate SQL](#intermediate-sql)
-- [Advanced SQL](#advanced-sql)
-- [SQL Optimization](#sql-optimization)
-- [Window Functions](#window-functions)
-- [Real-world Scenarios](#real-world-scenarios)
-- [Database Design](#database-design)
-- [Miscellaneous](#miscellaneous)
-
----
-
-## Basic SQL
-
 ### 1. What is SQL?
 **Answer:**
 SQL (Structured Query Language) is a standard language for accessing and manipulating relational databases. It is used to query, insert, update, and delete data, as well as to create and modify the structure of database systems.
