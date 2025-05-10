@@ -1,16 +1,16 @@
 ### 1. What is SQL?
-**Answer:**
+
 SQL (Structured Query Language) is a standard language for accessing and manipulating relational databases. It is used to query, insert, update, and delete data, as well as to create and modify the structure of database systems.
 ---
 ### 2. What are the different types of SQL statements?
-**Answer:**
+
 - DDL (Data Definition Language): CREATE, ALTER, DROP
 - DML (Data Manipulation Language): SELECT, INSERT, UPDATE, DELETE
 - DCL (Data Control Language): GRANT, REVOKE
 - TCL (Transaction Control Language): COMMIT, ROLLBACK, SAVEPOINT
 ---
 ### 3. What is the difference between WHERE and HAVING?
-**Answer:**
+
 - `WHERE` filters rows before grouping.
 - `HAVING` filters groups after aggregation.
 
@@ -280,8 +280,55 @@ CROSS JOIN Departments;
 | RIGHT JOIN      | All from right + matched from left         | ✅ Left side     |
 | FULL OUTER JOIN | All rows from both, matched where possible | ✅ Both sides    |
 | CROSS JOIN      | All combinations (Cartesian product)       | ❌               |
+---
+### 55. Minimum and Maximum Rows Returned by SQL Joins
+
+Understanding how many rows a SQL join can return is crucial for query optimization and avoiding unexpected results.
+
+### 🔍 Join Behavior Summary
+
+| Join Type          | Minimum Rows Returned                       | Maximum Rows Returned                      |
+|--------------------|---------------------------------------------|--------------------------------------------|
+| **INNER JOIN**     | `0` (if no matches exist in either table)   | `min(#rows in A, #rows in B)`              |
+| **LEFT JOIN**      | `#rows in A`                                | `#rows in A` (with possible NULLs from B)  |
+| **RIGHT JOIN**     | `#rows in B`                                | `#rows in B` (with possible NULLs from A)  |
+| **FULL OUTER JOIN**| `max(#rows in A, #rows in B)`               | `#rows in A + #rows in B`                  |
+| **CROSS JOIN**     | `#rows in A × #rows in B`                   | `#rows in A × #rows in B`                  |
+
+> ✅ **Note**:  
+> - `A` = Left Table  
+> - `B` = Right Table  
+> - `NULLs` appear when there's no match in non-preserved tables.
+
+### 📘 Example Scenario
+
+Let’s say:
+
+- Table A (Employees): 3 rows  
+- Table B (Departments): 2 rows
+
+Then:
+
+| Join Type          | Example Row Count Returned          |
+|--------------------|-------------------------------------|
+| **INNER JOIN**     | 0 to 2 (depends on matching `DeptID`)|
+| **LEFT JOIN**      | 3 (always all from Employees)        |
+| **RIGHT JOIN**     | 2 (always all from Departments)      |
+| **FULL OUTER JOIN**| 3 to 5 (all unmatched + matched rows)|
+| **CROSS JOIN**     | 3 × 2 = 6                            |
 
 
+### 🔄 Join Behavior Explained
+
+- **INNER JOIN**: Only rows with matching keys in both tables.
+- **LEFT JOIN**: All rows from the left table, with NULLs where there's no match on the right.
+- **RIGHT JOIN**: All rows from the right table, with NULLs where there's no match on the left.
+- **FULL OUTER JOIN**: All rows from both sides, with NULLs for unmatched columns.
+- **CROSS JOIN**: Every row in A joins with every row in B (Cartesian product).
+
+📌 Useful for estimating result size and understanding query performance!
+
+---
 
 
 
