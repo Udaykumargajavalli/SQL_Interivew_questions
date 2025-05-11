@@ -1,6 +1,7 @@
 ### 1. What is SQL?
-
 SQL (Structured Query Language) is a standard language for accessing and manipulating relational databases. It is used to query, insert, update, and delete data, as well as to create and modify the structure of database systems.
+
+
 ---
 ### 2. What are the different types of SQL statements?
 
@@ -25,12 +26,15 @@ HAVING COUNT(*) > 5;
 ---
 ### 4. What is a primary key?
 A primary key is a field in a table which uniquely identifies each row/record in that table. Primary keys must contain unique values and cannot contain NULL values.
+
 ---
 ### 5. What is a foreign key?
 A foreign key is a field (or collection of fields) in one table that uniquely identifies a row of another table. The foreign key is defined in a second table, but it refers to the primary key or a unique key in the first table.
+
 ---
 ### 6. What is a join?
 A JOIN clause is used to combine rows from two or more tables, based on a related column between them.
+
 ---
 ### 7. What are the different types of joins?
 The different types of joins are INNER JOIN, LEFT JOIN (or LEFT OUTER JOIN), RIGHT JOIN (or RIGHT OUTER JOIN), and FULL JOIN (or FULL OUTER JOIN).
@@ -417,5 +421,75 @@ SELECT city FROM suppliers;
 | You want to preserve duplicates  | `UNION ALL` |
 | You are aggregating or counting  | `UNION ALL` (then filter/aggregate) |
 
+---
 
+### 58. what is CTE and syntax, how many ctes you can write in sql query?
 
+#### What is a CTE?
+
+A **Common Table Expression (CTE)** is a temporary result set in SQL that can be referenced within another SQL query. CTEs help improve the readability and modularity of complex queries.
+
+## Syntax
+
+```sql
+WITH cte_name AS (
+    SELECT column1, column2
+    FROM some_table
+    WHERE condition
+)
+SELECT *
+FROM cte_name;
+```
+
+#### How many CTEs can you write in a SQL query?
+There is no strict limit on the number of CTEs you can define in a query — it's constrained by the SQL engine (e.g., PostgreSQL, SQL Server, MySQL) and the available system memory. In practice, many CTEs can be used as long as the query remains manageable and performs well.
+
+📌 Summary
+* WITH defines a CTE.
+* Improves clarity of complex queries.
+* Supports multiple CTEs in one query.
+* No strict limit — use as needed with performance in mind.
+
+---
+
+### 59. Differences between cte and subquery?
+| Feature               | CTE (Common Table Expression)                                        | Subquery                                                   |
+| --------------------- | -------------------------------------------------------------------- | ---------------------------------------------------------- |
+| **Definition**        | A temporary result set defined using `WITH` at the start of a query  | A nested query inside `SELECT`, `FROM`, or `WHERE` clauses |
+| **Readability**       | More readable for complex queries with multiple steps                | Can become hard to read when deeply nested                 |
+| **Reusability**       | Can be referenced multiple times within the main query               | Cannot be reused; needs to be repeated                     |
+| **Recursion Support** | Supports recursion (especially for hierarchical data)                | Does not support recursion                                 |
+| **Performance**       | Often optimized similarly to subqueries; readability is the main win | Slightly more performant in simple cases                   |
+| **Scope**             | Available only to the query immediately following it                 | Limited to the part of the query where it’s used           |
+
+🧠 Summary:
+* Use CTEs when your query is complex, needs recursion, or has reusable logic.
+* Use subqueries for quick, simple logic that's only needed once.
+---
+
+### 60. Explain about self join vs subquery
+#### ✅ Self Join
+A self join is a join where a table is joined to itself. It's used when you want to compare rows within the same table.
+
+##### 📌 Use Case:
+Find relationships between rows in the same table, such as manager-employee, product-category, or friend connections.
+
+#### ✅ Subquery
+A subquery is a query embedded inside another query. It can return a single value (scalar), a row, or a table, and can be used in SELECT, FROM, or WHERE clauses.
+
+###### 📌 Use Case:
+Use when you want to filter, calculate, or retrieve a value based on another query result.
+---
+
+### 61. Tell me a situation where you used or we can use CTE in sql
+There can be multiple answers to this question based on the scenario. Below is one such answer.
+
+#### ✅ Use Case: Ranking Users Based on Activity
+Imagine you're working with a table user_actions that logs every action taken by users. You want to find the top 3 most active users per month based on the number of actions.
+
+📊 Problem:
+
+You need to:
+* Count actions per user per month
+* Rank them
+* Filter only the top 3 per month
