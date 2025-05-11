@@ -881,7 +881,6 @@ Optimizing slow queries with multiple joins involves several strategies:
 7.  **Denormalization (use with caution):** In some cases, and with careful consideration of data integrity implications, denormalizing the database schema by adding redundant columns to tables can reduce the need for complex joins.
 
 8.  **Limit Results:** If you don't need all the rows, use `LIMIT` to reduce the amount of data processed and returned.
-
 By systematically investigating these areas, you can often identify and resolve the performance bottlenecks in your SQL queries with multiple joins.
 ---
 ### 71. What is a Recursive CTE, and when would you use it?
