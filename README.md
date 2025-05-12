@@ -1115,3 +1115,225 @@ WHERE
     LoginTimestamp >= date('now', '-30 days');
 ```
 ---
+
+### 77. Given a table of user activity logs, write a query to calculate the daily active users (DAU).
+
+```sql
+SELECT
+    DATE(activity_time) AS activity_date,
+    COUNT(DISTINCT user_id) AS daily_active_users
+FROM
+    user_activity
+GROUP BY
+    activity_date
+ORDER BY
+    activity_date;
+```
+---
+
+### 78. Write a query to segment users based on their engagement levels.
+If we dont have any information, we can take below assumption and answer the query.
+
+#### 🧠 Assumptions:
+* We have a table named user_activity with the following columns:
+  * user_id (unique identifier for each user)
+  * last_login_date (date of the user's last login)
+  * total_sessions (total number of sessions in the last 30 days)
+  * avg_session_duration (average session duration in minutes)
+  * content_interactions (number of content interactions like likes, comments, shares)
+
+#### Engagement Segmentation Criteria:
+Lets define three levels of engagement:
+
+* **Highly Engaged**:
+  * total_sessions >= 15
+  * avg_session_duration >= 10
+  * content_interactions >= 20
+* **Moderately Engaged**:
+  * total_sessions BETWEEN 5 AND 14
+  * avg_session_duration BETWEEN 5 AND 9.9
+  * content_interactions BETWEEN 5 AND 19
+* **Low Engagement**:
+  * Anything below the thresholds for Moderate Engagement
+ 
+```sql
+SELECT 
+    user_id,
+    CASE 
+        WHEN total_sessions >= 15 
+             AND avg_session_duration >= 10 
+             AND content_interactions >= 20 THEN 'Highly Engaged'
+        WHEN total_sessions BETWEEN 5 AND 14 
+             AND avg_session_duration BETWEEN 5 AND 9.9 
+             AND content_interactions BETWEEN 5 AND 19 THEN 'Moderately Engaged'
+        ELSE 'Low Engagement'
+    END AS engagement_level
+FROM user_activity;
+```
+
+---
+
+### 79. Average Post Hiatus
+Average Post Hiatus typically refers to the average length of time between a user's posts on a specific platform or across multiple platforms. It measures the typical gaps or breaks in someone's posting activity.
+
+#### 🧠 Assumptions:
+Facebook_posts with the following columns:
+* user_id – ID of the user who made the post
+* post_date – Date of the post (in DATE format)
+
+```sql
+SELECT 
+    user_id,
+    DATEDIFF(MAX(post_date), MIN(post_date)) AS days_between_first_and_last_post
+FROM 
+    facebook_posts
+WHERE 
+    YEAR(post_date) = 2024
+GROUP BY 
+    user_id
+HAVING 
+    COUNT(*) >= 2;
+```
+---
+
+### 80. Facebook Power Users
+A Facebook power user is defined as someone who posts a ton and gets a lot of reactions on their post. For the purpose of this question, consider a Facebook power user as someone who posts at least twice a day and receives an average of 150 comments and/or reactions per post. Write a SQL query to return the IDs of all Facebook power users, along with the number of posts, and the average number of reactions per post.
+
+* user_post table: user_id (integer), post_id (integer), post_date (timestamp)
+* post_interactions table: post_id (integer), comments (integer), reactions (integer)
+
+To identify Facebook power users, we need to:
+
+* Calculate the number of posts per user per day.
+* Filter users who post at least twice a day on average.
+* Calculate the average number of comments and reactions per post.
+* Filter users with an average of at least 150 interactions per post.
+
+```sql
+WITH daily_post_counts AS (
+    SELECT 
+        user_id,
+        DATE(post_date) AS post_day,
+        COUNT(*) AS posts_per_day
+    FROM user_post
+    GROUP BY user_id, DATE(post_date)
+),
+users_with_high_post_frequency AS (
+    SELECT 
+        user_id
+    FROM daily_post_counts
+    GROUP BY user_id
+    HAVING AVG(posts_per_day) >= 2
+),
+post_interaction_totals AS (
+    SELECT 
+        up.user_id,
+        COUNT(up.post_id) AS total_posts,
+        SUM(pi.comments + pi.reactions) * 1.0 / COUNT(up.post_id) AS avg_interactions_per_post
+    FROM user_post up
+    JOIN post_interactions pi ON up.post_id = pi.post_id
+    GROUP BY up.user_id
+),
+power_users AS (
+    SELECT 
+        pit.user_id,
+        pit.total_posts,
+        pit.avg_interactions_per_post
+    FROM post_interaction_totals pit
+    JOIN users_with_high_post_frequency uwhpf ON pit.user_id = uwhpf.user_id
+    WHERE pit.avg_interactions_per_post >= 150
+)
+
+SELECT * FROM power_users;
+```
+---
+
+### 81. Active User Retention
+Assume you’re given a table containing information on Facebook user actions. Write a SQL query to obtain the number of monthly active users (MAUs) in July 2022, including the month in numerical format “1, 2, 3”. Hint: An active user is defined as a user who has performed actions such as ‘sign-in’, ‘like’, or ‘comment’ in both the current month and the previous month.
+
+* user_actions table: user_id (integer), event_id (integer), event_type (string), event_date (datetime)
+
+```sql
+WITH filtered_actions AS (
+    SELECT 
+        user_id,
+        EXTRACT(MONTH FROM event_date) AS month,
+        EXTRACT(YEAR FROM event_date) AS year
+    FROM user_actions
+    WHERE event_type IN ('sign-in', 'like', 'comment')
+      AND event_date BETWEEN '2022-06-01' AND '2022-07-31'
+),
+monthly_users AS (
+    SELECT DISTINCT user_id, month
+    FROM filtered_actions
+    WHERE year = 2022
+)
+
+SELECT 
+    7 AS month,
+    COUNT(DISTINCT ju.user_id) AS monthly_active_users
+FROM 
+    monthly_users ju
+JOIN 
+    monthly_users ju_prev
+    ON ju.user_id = ju_prev.user_id
+WHERE 
+    ju.month = 7 AND ju_prev.month = 6;
+```
+
+### 82. Facebook Friend Recommendations
+Facebook wants to recommend new friends to people who show interest in attending 2 or more of the same private Facebook events. Write a SQL query to find pairs of friends to be recommended to each other if they’re interested in attending 2 or more of the same private events.
+
+**Notes**:
+* A user interested in attending would have either ‘going’ or ‘maybe’ as their attendance status.
+* Friend recommendations are unidirectional, meaning if user x and user y should be recommended to each other, the result table should have both user x recommended to user y and user y recommended to user x.
+* The result should not contain duplicates (i.e., user y should not be recommended to user x multiple times).
+
+**schema**:
+* friendship_status table: user_a_id (integer), user_b_id (integer), status (enum: ‘friends’, ‘not_friends’)
+* event_rsvp table: user_id (integer), event_id (integer), event_type (enum: ‘public’, ‘private’), attendance_status (enum: ‘going’, ‘maybe’, ‘not_going’), event_date (date)
+
+To find pairs of users who should be recommended to each other based on shared interest in 2 or more of the same private events.
+1. Filters for users who RSVP'd as 'going' or 'maybe' to private events.
+2. Finds user pairs who have RSVP'd to the same private events.
+3. Counts the number of shared events per user pair.
+4. Filters for pairs with 2 or more shared events.
+5. Ensures the users are not already friends.
+6. Outputs both directions of the recommendation (i.e., x → y and y → x).
+7. Avoids duplicate recommendations.
+
+```sql
+WITH interested_users AS (
+    SELECT user_id, event_id
+    FROM event_rsvp
+    WHERE event_type = 'private'
+      AND attendance_status IN ('going', 'maybe')
+),
+shared_events AS (
+    SELECT iu1.user_id AS user_a, iu2.user_id AS user_b, COUNT(*) AS shared_event_count
+    FROM interested_users iu1
+    JOIN interested_users iu2
+      ON iu1.event_id = iu2.event_id
+     AND iu1.user_id < iu2.user_id
+    GROUP BY iu1.user_id, iu2.user_id
+    HAVING COUNT(*) >= 2
+),
+non_friends AS (
+    SELECT se.user_a, se.user_b
+    FROM shared_events se
+    LEFT JOIN friendship_status fs
+      ON (se.user_a = fs.user_a_id AND se.user_b = fs.user_b_id)
+         OR (se.user_a = fs.user_b_id AND se.user_b = fs.user_a_id)
+    WHERE fs.status IS NULL OR fs.status != 'friends'
+)
+SELECT user_a AS recommender, user_b AS recommended
+FROM non_friends
+UNION
+SELECT user_b AS recommender, user_a AS recommended
+FROM non_friends;
+```
+**🗣️ Explanation**:
+* interested_users: Filters only those users who are interested in private events.
+* shared_events: Finds unique user pairs who share the same private events and counts them.
+* non_friends: Filters out pairs who are already friends.
+* Final SELECT with UNION: Ensures both directions of recommendation are included without duplicates.
