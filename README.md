@@ -1337,3 +1337,35 @@ FROM non_friends;
 * shared_events: Finds unique user pairs who share the same private events and counts them.
 * non_friends: Filters out pairs who are already friends.
 * Final SELECT with UNION: Ensures both directions of recommendation are included without duplicates.
+---
+### 83. What is Cardinality
+Cardinality in databases refers to the uniqueness and relationships of data values within tables. It plays a crucial role in database design, indexing, and query optimization.
+
+#### 🔹 1. Column Cardinality
+Column cardinality describes the number of distinct values in a column.
+* High Cardinality: Many unique values
+    * Example: Email addresses, UUIDs, phone numbers.
+* Low Cardinality: Few unique values
+    * Example: Boolean flags, gender, status fields.
+* Medium Cardinality: Moderate number of unique values
+    * Example: U.S. states, product categories.
+    
+Understanding column cardinality helps the database engine choose efficient indexes and query plans.
+
+#### 2. Relationship Cardinality
+Relationship cardinality defines how tables relate to each other:
+
+* One-to-One (1:1)
+Each row in Table A relates to exactly one row in Table B.
+* One-to-Many (1:N)
+A row in Table A can relate to multiple rows in Table B.
+* Many-to-Many (M:N)
+Multiple rows in Table A can relate to multiple rows in Table B.
+
+Implemented using a junction (bridge) table.
+
+#### Why Cardinality Matters
+* Helps in database normalization.
+* Influences indexing strategies.
+* Improves query performance.
+* Aids in creating efficient and scalable data models.
