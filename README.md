@@ -1349,7 +1349,7 @@ Column cardinality describes the number of distinct values in a column.
     * Example: Boolean flags, gender, status fields.
 * Medium Cardinality: Moderate number of unique values
     * Example: U.S. states, product categories.
-    
+
 Understanding column cardinality helps the database engine choose efficient indexes and query plans.
 
 #### 2. Relationship Cardinality
@@ -1369,3 +1369,164 @@ Implemented using a junction (bridge) table.
 * Influences indexing strategies.
 * Improves query performance.
 * Aids in creating efficient and scalable data models.
+---
+### 84. ⁠How do you calculate the median of a numeric column in SQL?
+
+Standard approach using subqueries
+```sql
+SELECT AVG(val) AS median
+FROM (
+    SELECT val
+    FROM your_table
+    WHERE val IS NOT NULL
+    ORDER BY val
+    LIMIT 2 - (SELECT COUNT(*) FROM your_table WHERE val IS NOT NULL) % 2  -- 1 if odd, 2 if even
+    OFFSET (SELECT (COUNT(*) - 1) / 2 FROM your_table WHERE val IS NOT NULL)
+) AS median_values;
+```
+
+#### Explanation
+* Ensures only valid numeric values are considered.
+* Used multiple times to determine how many values are in the column.
+* Median requires values to be sorted.
+* Calculate how many values to take
+    * If the count is odd, LIMIT = 1 (get the middle value).
+    * If the count is even, LIMIT = 2 (get the two middle values).
+* Calculate where to start (offset)
+    * The middle value (if odd count),
+    * The first of the two middle values (if even count).
+---
+### 85 Write a query to find duplicate rows in a dataset.
+
+Assuming the employee table.
+```sql
+SELECT emp_name, emp_id, -- Add all columns that define a "row"
+       COUNT(*) AS duplicate_count
+FROM emp
+GROUP BY emp_name, emp_id -- Group by the same columns
+HAVING COUNT(*) > 1;
+```
+---
+### 86. Write a query to calculate the rolling average of sales for the past 7 days.
+To analyze trends over time, we can use rolling average of data.
+```sql
+SELECT
+    sales_date,
+    SUM(sales_amount) AS daily_sales,
+    AVG(SUM(sales_amount)) OVER (
+        ORDER BY sales_date
+        ROWS BETWEEN 6 PRECEDING AND CURRENT ROW
+    ) AS rolling_avg_7_days
+FROM sales_table
+GROUP BY sales_date
+ORDER BY sales_date;
+
+```
+---
+### 87. Write a query to extract users who performed at least 5 transactions in a month.
+
+This query retrieves users who have performed **at least 5 transactions in a single month**. It is useful for identifying high-engagement users or filtering for loyalty analysis.
+
+### 🔍 SQL Query
+
+```sql
+SELECT user_id, 
+       DATE_TRUNC('month', transaction_date) AS month,
+       COUNT(*) AS transaction_count
+FROM transactions
+GROUP BY user_id, DATE_TRUNC('month', transaction_date)
+HAVING COUNT(*) >= 5
+ORDER BY user_id, month;
+```
+---
+### 88. How would you detect anomalies or outliers in a dataset using SQL?
+You can detect anomalies by calculating statistical measures (like the mean and standard deviation) and then filtering rows that deviate too far from the mean. For example, to find rows where a value is more than 3 standard deviations away from the mean as below
+#### 1. 📉 Using Standard Deviation (Z-score method)
+```sql
+WITH stats AS (
+    SELECT 
+        AVG(value) AS avg_value, 
+        STDDEV(value) AS std_dev
+    FROM your_table
+)
+SELECT 
+    t.*,
+    (t.value - s.avg_value) / s.std_dev AS z_score
+FROM your_table t
+CROSS JOIN stats s
+WHERE ABS((t.value - s.avg_value) / s.std_dev) > 3;
+```
+#### 2. 🟨 Using Percentile Thresholds (IQR method)
+```sql
+WITH percentiles AS (
+    SELECT
+        PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY value) AS Q1,
+        PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY value) AS Q3
+    FROM data_table
+)
+SELECT *
+FROM data_table, percentiles
+WHERE value < Q1 - 1.5 * (Q3 - Q1)
+   OR value > Q3 + 1.5 * (Q3 - Q1);
+```
+---
+### 89. Write a query to pivot a table and convert rows into columns.
+
+
+Pivoting is the process of transforming **row-based data into columnar format** — useful for creating summary reports where values in one column become separate columns in the result set.
+
+#### 🧾 Example Use Case
+
+Suppose you have a table `sales_data`:
+
+| user_id | month | sales_amount |
+|---------|-------|--------------|
+| 1       | Jan   | 100          |
+| 1       | Feb   | 150          |
+| 2       | Jan   | 200          |
+| 2       | Feb   | 250          |
+
+The goal is to **pivot the `month` values into columns** like:
+
+| user_id | Jan_sales | Feb_sales |
+|---------|-----------|-----------|
+| 1       | 100       | 150       |
+| 2       | 200       | 250       |
+
+---
+
+#### ✅ SQL Query Using `CASE WHEN` (Database-Agnostic)
+
+```sql
+SELECT
+    user_id,
+    SUM(CASE WHEN month = 'Jan' THEN sales_amount ELSE 0 END) AS Jan_sales,
+    SUM(CASE WHEN month = 'Feb' THEN sales_amount ELSE 0 END) AS Feb_sales
+FROM sales_data
+GROUP BY user_id;
+```
+
+#### 🛠 SQL Server Version Using PIVOT
+```sql
+SELECT user_id, [Jan], [Feb]
+FROM (
+    SELECT user_id, month, sales_amount
+    FROM sales_data
+) AS source
+PIVOT (
+    SUM(sales_amount) FOR month IN ([Jan], [Feb])
+) AS pivot_table;
+```
+---
+### 90. How can you rank users based on their total purchase value in descending order?
+#### ✅ SQL Query Using `RANK()` or `DENSE_RANK()`
+
+```sql
+SELECT
+    user_id,
+    SUM(purchase_amount) AS total_purchase,
+    RANK() OVER (ORDER BY SUM(purchase_amount) DESC) AS purchase_rank
+FROM sales
+GROUP BY user_id
+ORDER BY purchase_rank;
+```
